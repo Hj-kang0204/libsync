@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서관 홈페이지</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .menu-button {
+            display: inline-block;
+            margin: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .menu-button:hover {
+            background-color: #45a049;
+        }
+        #user-info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #profile-button {
+            display: none; /* 로그인 전까지 숨김 */
+        }
+    </style>
+</head>
+<body>
+    <h1>도서관 홈페이지</h1>
+    <p>원하는 기능을 선택하세요:</p>
+
+    <button class="menu-button" onclick="window.location.href='library.html'">도서 검색</button>
+    <button id="profile-button" class="menu-button">내 프로필</button>
+
+    <!-- 로그인 & 로그아웃 버튼 -->
+    <div id="auth-container">
+        <button id="google-login" class="menu-button">Google 로그인</button>
+        <button id="google-logout" class="menu-button" style="display: none;">로그아웃</button>
+    </div>
+
+    <!-- 로그인 상태 표시 -->
+    <p id="user-info">로그인 상태: <span id="user-status">로그인되지 않음</span></p>
+
+    <!-- Firebase 설정 및 로그인 기능 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnpV_k_gszs7WUpXrOsYRIYzYR9sYxfco",
+            authDomain: "library-project-dc785.firebaseapp.com",
+            projectId: "library-project-dc785",
+            storageBucket: "library-project-dc785.appspot.com",
+            messagingSenderId: "605460167597",
+            appId: "1:605460167597:web:e72dae12a3a6f8fb6bbf24",
+            measurementId: "G-MSWCMM62QQ"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const provider = new GoogleAuthProvider();
+
+        // DOM이 로드된 후 실행
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("✅ DOM 로드 완료");
+            
+            const profileButton = document.getElementById("profile-button");
+            const loginButton = document.getElementById("google-login");
+            const logoutButton = document.getElementById("google-logout");
+            const userStatus = document.getElementById("user-status");
+
+            if (!profileButton || !loginButton || !logoutButton || !userStatus) {
+                console.error("❌ 요소를 찾을 수 없음");
+                return;
+            }
+
+            // 로그인 상태 확인 및 UI 업데이트
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userStatus.innerText = `${user.displayName} (${user.email})`;
+                    loginButton.style.display = "none";
+                    logoutButton.style.display = "block";
+                    profileButton.style.display = "block"; // 로그인 시 "내 프로필" 버튼 표시
+                } else {
+                    userStatus.innerText = "로그인되지 않음";
+                    loginButton.style.display = "block";
+                    logoutButton.style.display = "none";
+                    profileButton.style.display = "none"; // 로그아웃 시 숨김
+                }
+            });
+
+            // 로그인 버튼 이벤트
+            loginButton.addEventListener("click", () => {
+                signInWithPopup(auth, provider)
+                    .then((result) => {
+                        console.log("✅ 로그인 성공:", result.user);
+                    })
+                    .catch((error) => {
+                        console.error("로그인 오류:", error);
+                    });
+            });
+
+            // 로그아웃 버튼 이벤트
+            logoutButton.addEventListener("click", () => {
+                signOut(auth).then(() => {
+                    console.log("✅ 로그아웃 성공");
+                }).catch((error) => {
+                    console.error("로그아웃 오류:", error);
+                });
+            });
+
+            // 내 프로필 버튼 이벤트 (로그인한 경우만 작동)
+            profileButton.addEventListener("click", () => {
+                window.location.href = "profile.html";
+            });
+        });
+    </script>
+</body>
+</html>
+

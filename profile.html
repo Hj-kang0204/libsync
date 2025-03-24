@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 프로필</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .profile-container {
+            margin-top: 50px;
+        }
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .logout-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .logout-button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>나의 프로필</h1>
+    <div class="profile-container">
+        <img id="profile-pic" class="profile-pic" src="" alt="프로필 사진">
+        <p id="user-name">이름: </p>
+        <p id="user-email">이메일: </p>
+        <button id="logout-button" class="logout-button">로그아웃</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnpV_k_gszs7WUpXrOsYRIYzYR9sYxfco",
+            authDomain: "library-project-dc785.firebaseapp.com",
+            projectId: "library-project-dc785",
+            storageBucket: "library-project-dc785.appspot.com",
+            messagingSenderId: "605460167597",
+            appId: "1:605460167597:web:e72dae12a3a6f8fb6bbf24",
+            measurementId: "G-MSWCMM62QQ"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 로그인 상태 확인
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById("profile-pic").src = user.photoURL || "https://via.placeholder.com/100";
+                document.getElementById("user-name").innerText = `이름: ${user.displayName}`;
+                document.getElementById("user-email").innerText = `이메일: ${user.email}`;
+            } else {
+                alert("로그인이 필요합니다!");
+                window.location.href = "lib.html";  // 로그인 페이지로 이동
+            }
+        });
+
+        // 로그아웃 기능
+        document.getElementById("logout-button").addEventListener("click", () => {
+            signOut(auth).then(() => {
+                alert("로그아웃되었습니다.");
+                window.location.href = "lib.html";  // 로그인 페이지로 이동
+            }).catch((error) => {
+                console.error("로그아웃 오류:", error);
+            });
+        });
+    </script>
+
+</body>
+</html>

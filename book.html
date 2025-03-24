@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책 상세 정보</title>
+</head>
+<body>
+    <h1>책 상세 정보</h1>
+    <p id="book-info"></p>
+    
+    <button onclick="window.location.href='library.html'">책 목록으로 돌아가기</button>
+
+    <script>
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        const title = getQueryParam("title");
+        const author = getQueryParam("author");
+        const category = getQueryParam("category");
+
+        if (title && author && category) {
+            document.getElementById("book-info").innerText = `제목: ${title}\n저자: ${author}\n카테고리: ${category}`;
+        } else {
+            document.getElementById("book-info").innerText = "책 정보를 불러올 수 없습니다.";
+        }
+    </script>
+</body>
+</html>
