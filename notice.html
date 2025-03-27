@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 & 홍보</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .tab-button.active {
+            background-color: #2E7D32;
+        }
+        .content {
+            display: none;
+            max-width: 800px;
+            margin: auto;
+            text-align: left;
+        }
+        .content.active {
+            display: block;
+        }
+        .post-form {
+            margin-bottom: 20px;
+        }
+        .input-field, textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        .submit-button {
+            padding: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .post-list {
+            padding: 0;
+            list-style-type: none;
+        }
+        .post-item {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .post-item a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        .post-item a:hover {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>공지사항 & 홍보</h1>
+
+    <div class="tab-container">
+        <button class="tab-button active" onclick="changeTab('notice')">공지사항</button>
+        <button class="tab-button" onclick="changeTab('promo')">홍보</button>
+    </div>
+
+    <div id="notice" class="content active">
+        <h2>📢 공지사항</h2>
+        <div class="post-form">
+            <input type="password" id="notice-password" class="input-field" placeholder="비밀번호 입력">
+            <input type="text" id="notice-title" class="input-field" placeholder="제목">
+            <textarea id="notice-content" class="input-field" placeholder="내용 입력" oninput="autoResize(this)"></textarea>
+            <button class="submit-button" onclick="addPost('notice')">공지 등록</button>
+        </div>
+        <ul id="notice-posts" class="post-list"></ul>
+    </div>
+
+    <div id="promo" class="content">
+        <h2>📢 홍보 게시판</h2>
+        <div class="post-form">
+            <input type="password" id="promo-password" class="input-field" placeholder="비밀번호 입력">
+            <input type="text" id="promo-title" class="input-field" placeholder="제목">
+            <textarea id="promo-content" class="input-field" placeholder="내용 입력" oninput="autoResize(this)"></textarea>
+            <button class="submit-button" onclick="addPost('promo')">홍보 등록</button>
+        </div>
+        <ul id="promo-posts" class="post-list"></ul>
+    </div>
+
+    <button onclick="window.location.href='lib.html'">홈페이지로 돌아가기</button>
+    
+    <script>
+        function changeTab(tab) {
+            document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            document.querySelector(`button[onclick="changeTab('${tab}')"]`).classList.add('active');
+        }
+
+        function addPost(type) {
+            const password = document.getElementById(`${type}-password`).value;
+            if (password !== "0204") {
+                alert("비밀번호가 틀렸습니다!");
+                return;
+            }
+            const title = document.getElementById(`${type}-title`).value;
+            const content = document.getElementById(`${type}-content`).value;
+            if (title.trim() === "" || content.trim() === "") {
+                alert("제목과 내용을 입력하세요!");
+                return;
+            }
+            const postId = Date.now();
+            const postData = { id: postId, title, content, password };
+            let posts = JSON.parse(localStorage.getItem(type)) || [];
+            posts.push(postData);
+            localStorage.setItem(type, JSON.stringify(posts));
+            document.getElementById(`${type}-title`).value = "";
+            document.getElementById(`${type}-content`).value = "";
+            loadPosts(type);
+        }
+
+        function loadPosts(type) {
+            const container = document.getElementById(`${type}-posts`);
+            container.innerHTML = "";
+            const posts = JSON.parse(localStorage.getItem(type)) || [];
+            posts.forEach(post => {
+                const postElement = document.createElement("li");
+                postElement.classList.add("post-item");
+                postElement.innerHTML = `<a href="post.html?id=${post.id}&type=${type}">${post.title}</a>`;
+                container.appendChild(postElement);
+            });
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = (textarea.scrollHeight) + "px";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPosts("notice");
+            loadPosts("promo");
+        });
+    </script>
+
+</body>
+</html>

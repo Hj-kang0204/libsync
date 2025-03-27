@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>도서관 책 검색</title>
+    <title>KIS 도서관</title>
 </head>
 <body>
     <h1>도서관 책 검색</h1>
@@ -17,55 +17,64 @@
         <option value="소설">소설</option>
         <option value="과학">과학</option>
         <option value="수학">수학</option>
+        <option value="예술">예술</option>
     </select>
 
     <h2>책 목록</h2>
     <ul id="book-list"></ul>
 
-    <script>
-        const books = [
-            { title: "책 제목 1", author: "저자 1", category: "소설" },
-            { title: "책 제목 2", author: "저자 2", category: "과학" },
-            { title: "책 제목 3", author: "저자 3", category: "수학" },
-            { title: "책 제목 4", author: "저자 4", category: "소설" },
-            { title: "책 제목 5", author: "저자 5", category: "과학" }
-        ];
+    <button onclick="window.location.href='password.html'">책 추가</button>
+    <button onclick="window.location.href='lib.html'">홈페이지로 돌아가기</button>
 
-        const categorySelect = document.getElementById("category");
-        const searchInput = document.getElementById("search");
+    <script>
+        function loadBooks() {
+            return JSON.parse(localStorage.getItem('books')) || [];
+        }
+
+        function getReviews() {
+            return JSON.parse(localStorage.getItem('reviews')) || [];
+        }
+
+        function getAverageRating(bookTitle) {
+            const reviews = getReviews().filter(review => review.bookTitle === bookTitle);
+            if (reviews.length === 0) return "⭐(0.0)";
+
+            let totalRating = 0;
+            reviews.forEach(review => totalRating += parseFloat(review.rating));
+
+            return `⭐(${(totalRating / reviews.length).toFixed(1)})`;
+        }
 
         function displayBooks(filteredBooks) {
             const bookList = document.getElementById("book-list");
             bookList.innerHTML = "";
             filteredBooks.forEach((book) => {
                 const li = document.createElement("li");
-                li.textContent = `${book.title} - ${book.author} (${book.category})`;
-                li.style.cursor = "pointer";
+                li.innerHTML = `${book.title} - ${book.author} (${book.category}) <strong>${getAverageRating(book.title)}</strong>`;
                 li.onclick = function () {
-                    window.location.href = `book.html?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&category=${encodeURIComponent(book.category)}`;
+                    window.location.href = `book.html?title=${encodeURIComponent(book.title)}&author=${encodeURIComponent(book.author)}&category=${encodeURIComponent(book.category)}&description=${encodeURIComponent(book.description)}`;
                 };
                 bookList.appendChild(li);
             });
         }
 
         function filterBooks() {
-            const searchQuery = searchInput.value.toLowerCase();
-            const selectedCategory = categorySelect.value;
+            const searchQuery = document.getElementById("search").value.toLowerCase();
+            const selectedCategory = document.getElementById("category").value;
 
-            let filteredBooks = books.filter((book) => {
+            const books = loadBooks();
+
+            const filteredBooks = books.filter((book) => {
                 const matchesCategory = selectedCategory ? book.category === selectedCategory : true;
                 const matchesSearch =
-                    book.title.toLowerCase().includes(searchQuery) ||
-                    book.author.toLowerCase().includes(searchQuery);
+                    book.title.toLowerCase().includes(searchQuery) || book.author.toLowerCase().includes(searchQuery);
                 return matchesCategory && matchesSearch;
             });
 
             displayBooks(filteredBooks);
         }
 
-        displayBooks(books);
+        displayBooks(loadBooks());
     </script>
-
-    <button onclick="window.location.href='lib.html'">홈으로 돌아가기</button>
 </body>
 </html>

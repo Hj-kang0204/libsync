@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시글 상세보기</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { max-width: 800px; margin: auto; text-align: left; }
+        h1 { text-align: center; }
+        .post-content, .comment { border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 20px; position: relative; }
+        .edit-content, .nickname-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; resize: none; min-height: 100px; }
+        .options { position: absolute; top: 10px; right: 10px; cursor: pointer; }
+        .options-menu { display: none; position: absolute; top: 20px; right: 0; background: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); z-index: 10; }
+        .options-menu button { display: block; width: 100%; border: none; background: none; padding: 10px; text-align: left; cursor: pointer; }
+        .options-menu button:hover { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+
+    <h1>게시글 상세보기</h1>
+    <div class="container">
+        <div class="post-content">
+            <h2 id="post-title"></h2>
+            <p id="post-text"></p>
+            <div class="options" onclick="toggleMenu('post-menu')">⋮</div>
+            <div id="post-menu" class="options-menu">
+                <button onclick="enableEdit()">수정</button>
+                <button onclick="deletePost()">삭제</button>
+            </div>
+        </div>
+
+        <div id="edit-section" style="display: none;">
+            <textarea id="edit-content" class="edit-content"></textarea>
+            <input type="password" id="edit-password" placeholder="비밀번호 입력">
+            <button onclick="saveEdit()">수정 완료</button>
+        </div>
+
+        <div class="comment-section">
+            <h3>댓글</h3>
+            <input type="text" id="nickname-input" class="nickname-input" placeholder="닉네임 입력">
+            <textarea id="comment-input" class="edit-content" placeholder="댓글 입력"></textarea>
+            <button onclick="addComment()">댓글 작성</button>
+            <div id="comment-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let postId, postType;
+
+        function getPostData() {
+            const params = new URLSearchParams(window.location.search);
+            postId = params.get("id");
+            postType = params.get("type");
+
+            if (!postId || !postType) {
+                alert("잘못된 접근입니다.");
+                window.location.href = "notion.html";
+                return;
+            }
+
+            const posts = JSON.parse(localStorage.getItem(postType)) || [];
+            const post = posts.find(p => p.id == postId);
+            if (!post) {
+                alert("게시글을 찾을 수 없습니다.");
+                window.location.href = "notion.html";
+                return;
+            }
+
+            document.getElementById("post-title").innerText = post.title;
+            document.getElementById("post-text").innerText = post.content;
+            document.getElementById("edit-content").value = post.content;
+        }
+
+        function enableEdit() {
+            document.getElementById("edit-section").style.display = "block";
+            document.getElementById("post-menu").style.display = "none";
+        }
+
+        function saveEdit() {
+            const password = document.getElementById("edit-password").value;
+            if (password !== "0204") {
+                alert("비밀번호가 틀렸습니다!");
+                return;
+            }
+
+            const newContent = document.getElementById("edit-content").value;
+            let posts = JSON.parse(localStorage.getItem(postType)) || [];
+            const postIndex = posts.findIndex(p => p.id == postId);
+
+            if (postIndex !== -1) {
+                posts[postIndex].content = newContent;
+                localStorage.setItem(postType, JSON.stringify(posts));
+                alert("수정 완료!");
+                window.location.reload();
+            }
+        }
+
+        function deletePost() {
+            const password = prompt("비밀번호를 입력하세요:");
+            if (password !== "0204") { // 비밀번호 설정
+                alert("비밀번호가 틀렸습니다!");
+                return;
+            }
+        
+            if (!confirm("게시글을 삭제하시겠습니까?")) return;
+        
+            let posts = JSON.parse(localStorage.getItem(postType)) || [];
+            posts = posts.filter(p => p.id != postId);
+            localStorage.setItem(postType, JSON.stringify(posts));
+        
+            alert("삭제 완료!");
+            window.location.href = "notice.html"; 
+        }
+        
+        function addComment() {
+            const nickname = document.getElementById("nickname-input").value.trim();
+            const commentInput = document.getElementById("comment-input").value.trim();
+            if (nickname === "" || commentInput === "") {
+                alert("닉네임과 댓글을 입력하세요!");
+                return;
+            }
+
+            let comments = JSON.parse(localStorage.getItem(`comments_${postId}`)) || [];
+            comments.push({ id: Date.now(), nickname, text: commentInput });
+            localStorage.setItem(`comments_${postId}`, JSON.stringify(comments));
+
+            document.getElementById("nickname-input").value = "";
+            document.getElementById("comment-input").value = "";
+            loadComments();
+        }
+
+        function loadComments() {
+            const commentList = document.getElementById("comment-list");
+            commentList.innerHTML = "";
+            const comments = JSON.parse(localStorage.getItem(`comments_${postId}`)) || [];
+
+            comments.forEach(comment => {
+                const commentDiv = document.createElement("div");
+                commentDiv.classList.add("comment");
+                commentDiv.innerHTML = `
+                    <p><strong>${comment.nickname}</strong>: ${comment.text}</p>
+                    <div class="options" onclick="toggleMenu('comment-menu-${comment.id}')">⋮</div>
+                    <div id="comment-menu-${comment.id}" class="options-menu">
+                        <button onclick="editComment(${comment.id})">수정</button>
+                        <button onclick="deleteComment(${comment.id})">삭제</button>
+                    </div>
+                `;
+                commentList.appendChild(commentDiv);
+            });
+        }
+
+        function deleteComment(commentId) {
+            let comments = JSON.parse(localStorage.getItem(`comments_${postId}`)) || [];
+            comments = comments.filter(c => c.id != commentId);
+            localStorage.setItem(`comments_${postId}`, JSON.stringify(comments));
+            loadComments();
+        }
+
+        function editComment(commentId) {
+            let comments = JSON.parse(localStorage.getItem(`comments_${postId}`)) || [];
+            const comment = comments.find(c => c.id == commentId);
+            if (!comment) return;
+
+            const newContent = prompt("댓글을 수정하세요:", comment.text);
+            if (!newContent) return;
+
+            comment.text = newContent;
+            localStorage.setItem(`comments_${postId}`, JSON.stringify(comments));
+            loadComments();
+        }
+
+          <button onclick="window.location.href='notice.html'">공지사항으로 돌아가기</button>
+
+        function toggleMenu(menuId) {
+            const menu = document.getElementById(menuId);
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            getPostData();
+            loadComments();
+        });
+    </script>
+
+</body>
+</html>

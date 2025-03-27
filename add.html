@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책 정보 추가</title>
+</head>
+<body>
+    <h1>책 추가</h1>
+    
+    <form id="book-form">
+        <label for="book-title">책 제목:</label>
+        <input type="text" id="book-title" required><br><br>
+
+        <label for="book-author">저자:</label>
+        <input type="text" id="book-author" required><br><br>
+
+        <label for="book-category">카테고리:</label>
+        <select id="book-category" required>
+            <option value="">선택해주세요</option>
+            <option value="소설">소설</option>
+            <option value="과학">과학</option>
+            <option value="수학">수학</option>
+            <option value="예술">예술</option>
+        </select><br><br>
+
+        <label for="book-description">책 소개:</label>
+        <textarea id="book-description" required></textarea><br><br>
+
+        <button type="submit">책 추가</button>
+    </form>
+
+    <h3>등록된 책 목록</h3>
+    <ul id="book-list"></ul>
+
+    <script>
+        // 책 추가 기능
+        document.getElementById('book-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const title = document.getElementById('book-title').value;
+            const author = document.getElementById('book-author').value;
+            const category = document.getElementById('book-category').value;
+            const description = document.getElementById('book-description').value;
+
+            const book = {
+                title: title,
+                author: author,
+                category: category,
+                description: description
+            };
+
+            let books = JSON.parse(localStorage.getItem('books')) || [];
+            books.push(book);
+            localStorage.setItem('books', JSON.stringify(books));
+
+            alert("책이 추가되었습니다!");
+            displayBooks();  // 책 목록 갱신
+            document.getElementById('book-form').reset();
+        });
+
+        // 책 목록 표시
+        function displayBooks() {
+            const bookList = document.getElementById('book-list');
+            bookList.innerHTML = '';
+
+            const books = JSON.parse(localStorage.getItem('books')) || [];
+            books.forEach((book, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${book.title} (${book.author}) - ${book.category}`;
+
+                // 삭제 버튼 추가
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '삭제';
+                deleteButton.onclick = () => deleteBook(index);
+                li.appendChild(deleteButton);
+
+                bookList.appendChild(li);
+            });
+        }
+
+        // 책 삭제 기능
+        function deleteBook(index) {
+            let books = JSON.parse(localStorage.getItem('books')) || [];
+            books.splice(index, 1);  // 해당 책 삭제
+            localStorage.setItem('books', JSON.stringify(books));
+
+            alert("책이 삭제되었습니다.");
+            displayBooks();  // 책 목록 갱신
+        }
+
+        // 페이지 로드 시 책 목록 표시
+        displayBooks();
+    </script>
+
+    <button onclick="window.location.href='library.html'">도서관 책 검색으로 돌아가기</button>
+</body>
+</html>

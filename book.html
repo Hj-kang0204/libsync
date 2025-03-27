@@ -3,29 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>책 상세 정보</title>
+    <title>책 정보</title>
 </head>
 <body>
-    <h1>책 상세 정보</h1>
-    <p id="book-info"></p>
-    
-    <button onclick="window.location.href='library.html'">책 목록으로 돌아가기</button>
+    <h1>책 예약</h1>
+
+    <div id="book-details">
+        <h2 id="book-title"></h2>
+        <p id="book-author"></p>
+        <p id="book-category"></p>
+        <p id="book-description"></p>
+    </div>
+
+    <h3>예약 기능</h3>
+    <label for="reservation-start-date">예약 시작 날짜:</label>
+    <input type="date" id="reservation-start-date" required><br><br>
+
+    <label for="reservation-end-date">예약 종료 날짜:</label>
+    <input type="date" id="reservation-end-date" required><br><br>
+
+    <label for="student-id">학번:</label>
+    <input type="text" id="student-id" required><br><br>
+
+    <label for="reservation-name">예약자 이름:</label>
+    <input type="text" id="reservation-name" required><br><br>
+
+    <button onclick="reserveBook()">예약하기</button>
+
+    <h3>예약 목록</h3>
+    <ul id="reservation-list"></ul>
+
+    <h3>리뷰 작성</h3>
+    <label for="review-name">이름:</label>
+    <input type="text" id="review-name" required><br><br>
+
+    <label for="review-text">리뷰:</label>
+    <textarea id="review-text" required></textarea><br><br>
+
+    <label for="review-rating">별점:</label>
+    <select id="review-rating">
+        <option value="1">⭐</option>
+        <option value="2">⭐⭐</option>
+        <option value="3">⭐⭐⭐</option>
+        <option value="4">⭐⭐⭐⭐</option>
+        <option value="5">⭐⭐⭐⭐⭐</option>
+    </select><br><br>
+
+    <button onclick="submitReview()">리뷰 작성</button>
+
+    <h3>리뷰 목록 (<span id="average-rating">0</span>⭐, 총 <span id="review-count">0</span>개)</h3>
+    <ul id="review-list"></ul>
 
     <script>
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title');
+        const author = urlParams.get('author');
+        const category = urlParams.get('category');
+        const description = urlParams.get('description');
+
+        document.getElementById('book-title').textContent = title;
+        document.getElementById('book-author').textContent = `저자: ${author}`;
+        document.getElementById('book-category').textContent = `카테고리: ${category}`;
+        document.getElementById('book-description').textContent = `소개: ${description}`;
+
+        function getReservations() {
+            return JSON.parse(localStorage.getItem('reservations')) || [];
         }
 
-        const title = getQueryParam("title");
-        const author = getQueryParam("author");
-        const category = getQueryParam("category");
+        function displayReservations() {
+            const reservationList = document.getElementById('reservation-list');
+            reservationList.innerHTML = '';
 
-        if (title && author && category) {
-            document.getElementById("book-info").innerText = `제목: ${title}\n저자: ${author}\n카테고리: ${category}`;
-        } else {
-            document.getElementById("book-info").innerText = "책 정보를 불러올 수 없습니다.";
+            const reservations = getReservations().filter(reservation => reservation.bookTitle === title);
+
+            reservations.forEach(reservation => {
+                const li = document.createElement('li');
+                li.innerHTML = `이름: ${reservation.studentName}, 학번: ${reservation.studentId}, 예약 날짜: ${reservation.reservationStartDate} ~ ${reservation.reservationEndDate}`;
+                reservationList.appendChild(li);
+            });
         }
+
+        function isReservationValid(startDate, endDate) {
+            const today = new Date();
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start < today) {
+                alert("예약 시작일은 오늘 이후여야 합니다.");
+                return false;
+            }
+
+            const maxEndDate = new Date(start);
+            maxEndDate.setDate(start.getDate() + 7);
+
+            if (end > maxEndDate) {
+                alert("예약 기간은 최대 7일까지만 가능합니다.");
+                return false;
+            }
+
+            if (start >= end) {
+                alert("예약 시작일이 종료일보다 이전이어야 합니다.");
+                return false;
+            }
+
+            return true;
+        }
+
+        function reserveBook() {
+            const startDate = document.getElementById('reservation-start-date').value;
+            const endDate = document.getElementById('reservation-end-date').value;
+            const studentId = document.getElementById('student-id').value;
+            const studentName = document.getElementById('reservation-name').value;
+
+            if (!startDate || !endDate || !studentId || !studentName) {
+                alert("모든 정보를 입력해주세요.");
+                return;
+            }
+
+            if (!isReservationValid(startDate, endDate)) {
+                return;
+            }
+
+            const reservation = {
+                bookTitle: title,
+                reservationStartDate: startDate,
+                reservationEndDate: endDate,
+                studentId: studentId,
+                studentName: studentName
+            };
+
+            const reservations = getReservations();
+            reservations.push(reservation);
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+
+            alert(`${studentName}님 예약이 완료되었습니다!`);
+            displayReservations();
+        }
+
+        function getReviews() {
+            return JSON.parse(localStorage.getItem('reviews')) || [];
+        }
+
+        function displayReviews() {
+            const reviewList = document.getElementById('review-list');
+            const reviewCount = document.getElementById('review-count');
+            const averageRating = document.getElementById('average-rating');
+
+            reviewList.innerHTML = '';
+            const reviews = getReviews().filter(review => review.bookTitle === title);
+
+            if (reviews.length === 0) {
+                averageRating.textContent = "0";
+                reviewCount.textContent = "0";
+                return;
+            }
+
+            let totalRating = 0;
+            reviews.forEach(review => {
+                totalRating += parseInt(review.rating);
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${review.studentName}</strong> - ${review.rating}⭐<br>${review.text}`;
+                reviewList.appendChild(li);
+            });
+
+            averageRating.textContent = (totalRating / reviews.length).toFixed(1);
+            reviewCount.textContent = reviews.length;
+        }
+
+        const bannedWords = ["시발", "개새끼", "지랄", "존나", "좆", "애미", "ㅅㅂ", "ㅈㄴ", "새끼"]; // 금지어 목록 (예시)
+
+        function containsBannedWords(text) {
+            return bannedWords.some(word => text.includes(word));
+        }
+
+        function submitReview() {
+            const studentName = document.getElementById('review-name').value;
+            const reviewText = document.getElementById('review-text').value;
+            const rating = document.getElementById('review-rating').value;
+
+            if (!studentName || !reviewText) {
+                alert("이름과 리뷰를 입력해주세요.");
+                return;
+            }
+
+            if (containsBannedWords(reviewText)) {
+                alert("부적절한 단어가 포함되어 있습니다. 올바른 표현을 사용해주세요.");
+                return;
+            }
+
+            const review = {
+                bookTitle: title,
+                studentName: studentName,
+                text: reviewText,
+                rating: rating
+            };
+
+            const reviews = getReviews();
+            reviews.push(review);
+            localStorage.setItem('reviews', JSON.stringify(reviews));
+
+            alert("리뷰가 등록되었습니다!");
+            displayReviews();
+        }
+
+        displayReservations();
+        displayReviews();
     </script>
 </body>
 </html>
